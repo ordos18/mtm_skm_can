@@ -8,14 +8,22 @@
 
 #define mLEDs			(0xFF << 16)
 
-// W funkcjach do inicjalizacji CAN: 
-// - wykorzystac rejestry PINSEL, MOD, BTR, TFI1, AFMR, CMR.
-// - uzyc bittimingu z przykladu hitexa
-// - wylaczyc filtrowanie komunikatów („Acceptance filter” powinien "przepuszczac" wszystkie komunkiat)
-// - ustawic odpowiednio funkcje pinów
-//
-// W pozostalych funkcjach do CAN: 
-// - wykorzystac rejestry SR, TID1, TDA1, CMR, RDA.
+#define mAFMR_ACC_OFF	(1 << 0)
+#define mAFMR_ACC_BP	(1 << 1)
+
+#define mMOD_RM			(1 << 0)
+
+#define mBITTIMING		0x001C001D
+
+#define mSR_RBS			(1 << 0)
+#define mSR_TBS1		(1 << 2)
+
+#define mTFI1_DLC		(1 << 16)
+
+#define mCMR_TR			(1 << 0)
+#define mCMR_RRB		(1 << 2)
+
+#define mTID1			0x00000022
 
 void Led_Init (void) {
 	
@@ -24,42 +32,41 @@ void Led_Init (void) {
 
 void Can1_InitAsTX (void) {
 	
-	C1MOD	= 0x00000001;
+	C1MOD	= mMOD_RM;
 	PINSEL1 = PINSEL1 | mCAN_RD1;
 	
-	AFMR	= 0x00000002;
-	C1BTR	= 0x001C001D;
-	C1TFI1	= 0x00010000;
-	C1CMR	= 0x00000020;
+	AFMR	= mAFMR_ACC_BP;
+	C1BTR	= mBITTIMING;
+	C1TFI1	= mTFI1_DLC;
 	
-	C1MOD	= 0x00000000;
+	C1MOD	= C1MOD & ~(mMOD_RM);
 }
 
 void Can2_InitAsRX (void) {
 	
-	C2MOD	= 0x00000001;
+	C2MOD	= mMOD_RM;
 	
 	PINSEL1 = PINSEL1 | (mCAN_RD2 | mCAN_TD2);
-	C2BTR 	= 0x001C001D;
+	C2BTR 	= mBITTIMING;
 	
-	C2MOD 	= 0x00000000;
+	C2MOD 	= C2MOD & ~(mMOD_RM);
 }
 
 unsigned char ucCan1_TxFree (void) {
 	
-	return (C1SR & 0x00000004);
+	return (C1SR & mSR_TBS1);
 }
 
 unsigned char ucCan2_RxReady (void) {
 	
-	return (C2SR & 0x00000001);
+	return (C2SR & mSR_RBS);
 }
 
 void Can1_SendByte (unsigned char ucData) {
 	
-	C1TID1 = 0x00000022;
+	C1TID1 = mTID1;
 	C1TDA1 = ucData;
-	C1CMR = 0x00000001;
+	C1CMR = mCMR_TR;
 }
 
 unsigned char ucCan2_ReceiveByte (void) {
@@ -67,7 +74,7 @@ unsigned char ucCan2_ReceiveByte (void) {
 	unsigned char ucReceivedByte;
 	
 	ucReceivedByte = C2RDA & 0x000000FF;
-	C2CMR = 0x00000004;
+	C2CMR = mCMR_RRB;
 	
 	return ucReceivedByte;
 }
