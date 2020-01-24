@@ -36,16 +36,13 @@ int main(){
 	CopyString("12347",acTxStr);
 	Can1_SendString(); 
 	while(ucCan2_RxReady()==0){}
-		
-		//while(1){Led_ShowByte(0x08);}
 	if (eCompareString(acTxStr,acRxStr)==EQUAL) Led_ShowByte(0xF0);else Led_ShowByte(0x55);
-		//while(1){}
+		
 	// to samo tylko z innym lancuchem	
 	CopyString("bcdef",acTxStr);	
 	Can1_SendString();
 	while(ucCan2_RxReady()==0){}
-		//while(1){Led_ShowByte(acRxStr[0]);}
-	if (eCompareString(acTxStr,acRxStr)==EQUAL) Led_ShowByte(0xF0);else Led_ShowByte(acRxStr[0]);
+	if (eCompareString(acTxStr,acRxStr)==EQUAL) Led_ShowByte(0xF0);else Led_ShowByte(0x55);
 	
 	while(1){}	
 }

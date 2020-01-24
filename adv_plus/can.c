@@ -40,28 +40,39 @@ unsigned char ucRxReady = 0, ucc = 0;
 char *pcRx, *pcTx;
 unsigned char ucOffsetRx = 0, ucOffsetTx = 0;
 
+
+//----------------------TX-------------------------//
+void Can1_SendString (void) {
+	
+	while(0 == ucCan1_TxFree()) {}
+	ucOffsetTx = 0;
+	Can1_SendByte(pcTx[0]);
+}
+
+void Can1_SendByte (unsigned char ucData) {
+	
+	C1TID1 = mTID1;
+	C1TDA1 = ucData;
+	C1CMR = mCMR_TR;
+}
+
 __irq void CAN1_TX_Interrupt (void) {
-	
-	static unsigned char ucc = 0;
-	
-	//Led_ShowByte(ucc++);
-	//Led_ShowByte(pcTx[ucOffsetTx-2]);
 	
 	if(NULL != pcTx[ucOffsetTx]) {
 		ucOffsetTx++;
-		//while(ucCan1_TxFree() != 1) {Led_ShowByte(ucc++);}
 		Can1_SendByte(pcTx[ucOffsetTx]);
 	}
 	C1ICR;
 	VICVectAddr = 0; // Acknowledge Interrupt
 }
 
+
+
+//----------------------RX-------------------------//
+
 __irq void CAN2_RX_Interrupt (void) {
 	
-	
 	pcRx[ucOffsetRx] = ucCan2_ReceiveByte();
-	
-	//Led_ShowByte(pcRx[ucOffsetRx]);
 	
 	if(NULL == pcRx[ucOffsetRx]) {
 		ucRxReady = 1;
@@ -72,6 +83,7 @@ __irq void CAN2_RX_Interrupt (void) {
 	}
 	C2ICR;
 	VICVectAddr = 0; // Acknowledge Interrupt
+	Led_ShowByte(0x05);
 }
 
 void Can1_InitAsTX (char pcString[]) {
@@ -119,23 +131,6 @@ unsigned char ucCan2_RxReady (void) {
 	unsigned char ucResult=ucRxReady;
 	if (ucResult == 1) ucRxReady=0;
 	return ucResult;
-}
-
-void Can1_SendByte (unsigned char ucData) {
-	
-	//if(ucCan1_TxFree() != 1)
-		//Led_ShowByte(ucc++);
-	C1TID1 = mTID1;
-	C1TDA1 = ucData;
-	C1CMR = mCMR_TR;
-}
-
-void Can1_SendString (void) {
-	
-	//while(ucCan1_TxFree() != 1){}
-	ucOffsetTx = 0;
-	ucOffsetRx = 0;
-	Can1_SendByte(pcTx[0]);
 }
 
 unsigned char ucCan2_ReceiveByte (void) {
